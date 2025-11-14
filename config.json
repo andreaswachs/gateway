@@ -1,0 +1,22 @@
+{
+  "github": {
+    "organizations": [],
+    "paginate": true,
+    "limit": 1000,
+    "enabled": false
+  },
+  "customLinks": [
+    {
+      "name": "calendar",
+      "url": "https://calendar.google.com/calendar/u/0/r/week"
+    },
+    {
+      "name": "mail",
+      "url": "https://mail.google.com/mail/u/0/#inbox"
+    },
+    {
+      "name": "gemini",
+      "url": "https://gemini.google.com/app"
+    }
+  ]
+}

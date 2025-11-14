@@ -1,0 +1,24 @@
+@import './base.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-weight: normal;
+}
+
+/* Spotlight backdrop tweaks */
+body {
+  background: radial-gradient(ellipse at center, rgba(2,6,23,0.85) 0%, rgba(2,6,23,0.95) 100%);
+  color-scheme: dark;
+}
+
+.backdrop-blur-md {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}

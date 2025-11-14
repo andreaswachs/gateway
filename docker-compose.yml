@@ -1,0 +1,8 @@
+services:
+  gateway:
+    image: work/gateway
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 9989:8080
