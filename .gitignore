@@ -37,3 +37,5 @@ config.template.json
 # Generated data files (created by scripts)
 src/assets/data.json
 scripts/custom_data.json
+
+config.json
