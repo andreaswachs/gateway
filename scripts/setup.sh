@@ -5,26 +5,16 @@ echo "Gateway Setup Script"
 echo "================================================"
 echo ""
 
-# Check if config.json already exists
-if [ -f "config.json" ]; then
-    echo "⚠️  config.json already exists!"
-    read -p "Do you want to overwrite it? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Setup cancelled. Your existing config.json is unchanged."
-        exit 0
-    fi
-fi
-
 # Copy the example config
 if [ ! -f "config.example.json" ]; then
     echo "ERROR: config.example.json not found!"
     exit 1
 fi
 
-cp config.example.json config.json
-echo "✓ Created config.json from template"
-echo ""
+# Check if config.json already exists
+if [ ! -f "config.json" ]; then
+    cp config.example.json config.json
+fi
 
 # Interactive configuration
 echo "Let's configure your Gateway!"
