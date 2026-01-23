@@ -50,7 +50,19 @@ const calculateSimilarity = (input: string, name: string, fullName: string): num
   return 0
 }
 
+const navigateTo = (url: string) => {
+  window.location.href = url
+}
+
 const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    const input = event.target as HTMLInputElement
+    input.value = ''
+    searchResults.value = []
+    return
+  }
+
   if (searchResults.value.length === 0) return
 
   if (event.key === 'ArrowDown') {
@@ -62,7 +74,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   } else if (event.key === 'Enter' && selectedIndex.value >= 0) {
     event.preventDefault()
     const selectedItem = searchResults.value[selectedIndex.value]
-    window.location.href = selectedItem.url
+    navigateTo(selectedItem.url)
   }
 }
 
@@ -115,53 +127,91 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[rgba(15,23,42,0.6)] flex items-start justify-center pt-20">
-    <!-- Backdrop container to mimic Spotlight -->
-    <div class="w-full max-w-3xl px-6">
-      <div class="backdrop-blur-md bg-white/6 rounded-2xl shadow-2xl border border-white/10 p-6">
-        <div class="flex items-center gap-4">
-          <img src="/src/assets/logo.svg" alt="logo" class="h-10 w-10 opacity-95" />
-          <div>
-            <h1 class="text-xl text-white font-semibold">Gateway</h1>
-            <p class="text-sm text-slate-300">Quickly find projects, docs, and tools</p>
-          </div>
+  <div class="min-h-screen w-full relative">
+    <!-- Background layers -->
+    <div class="gateway-bg"></div>
+    <div class="gateway-grid"></div>
+    <div class="gateway-particles"></div>
+
+    <!-- Main content -->
+    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center px-6">
+      <!-- Logo and branding -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="relative mb-4">
+          <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur-xl opacity-30"></div>
+          <img src="/src/assets/logo.svg" alt="logo" class="relative h-16 w-16" />
         </div>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Gateway</h1>
+        <p class="text-slate-400 mt-1 text-sm">Press <span class="kbd">⌘</span> <span class="kbd">K</span> anywhere to search</p>
+      </div>
 
-        <!-- Keep the input static by using a positioned container; results are absolutely positioned inside -->
-        <div class="mt-6 relative">
-          <input
-            type="text"
-            class="w-full rounded-xl bg-white/5 placeholder:text-slate-400 text-white px-5 py-4 text-lg outline-none ring-1 ring-white/6 focus:ring-2 focus:ring-white/20"
-            placeholder="Search for repositories, services, or tools..."
-            @keydown="handleKeydown"
-            @input="handleInput"
-            autofocus
-          />
+      <!-- Search container -->
+      <div class="w-full max-w-2xl">
+        <div class="glass-card rounded-2xl p-2">
+          <!-- Search input -->
+          <div class="relative">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              class="search-input w-full rounded-xl bg-white/5 placeholder:text-slate-500 text-white pl-12 pr-4 py-4 text-lg outline-none border border-transparent focus:border-indigo-500/30"
+              placeholder="Search repositories, services, tools..."
+              @keydown="handleKeydown"
+              @input="handleInput"
+              autofocus
+            />
+          </div>
 
-          <div v-if="searchResults.length" class="absolute left-0 right-0 mt-2 max-h-[480px] overflow-auto rounded-xl bg-white/2 border border-white/6 z-20 shadow-lg">
-            <ul>
+          <!-- Results dropdown -->
+          <div v-if="searchResults.length" class="results-container mt-2 max-h-[400px] overflow-auto rounded-xl">
+            <ul class="py-1">
               <li
                 v-for="(result, index) in searchResults"
-                :key="result.name"
+                :key="result.fullName || result.name"
                 :class="[
-                  'px-4 py-3 cursor-pointer flex items-center justify-between',
-                  index === selectedIndex
-                    ? 'bg-white/12 text-white ring-1 ring-white/20 border-l-4 border-white/30'
-                    : 'hover:bg-white/5'
+                  'result-item mx-1 px-4 py-3 rounded-lg cursor-pointer',
+                  index === selectedIndex ? 'selected' : ''
                 ]"
                 role="option"
                 :aria-selected="index === selectedIndex"
+                @click="navigateTo(result.url)"
+                @mouseenter="selectedIndex = index"
               >
-                <!-- Use flex with gap and allow the left text to truncate while the right URL shrinks -->
-                <div class="flex items-center gap-4 w-full">
-                  <a :href="result.url" class="truncate flex-1" :class="index === selectedIndex ? 'text-white font-semibold' : 'text-white'">
-                    {{ result.fullName || result.name }}
-                  </a>
-                  <span class="ml-4 shrink-0 w-48 text-ellipsis overflow-hidden whitespace-nowrap" :class="index === selectedIndex ? 'text-slate-100 text-sm' : 'text-slate-400 text-sm'">{{ result.url }}</span>
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-white font-medium truncate">{{ result.fullName || result.name }}</p>
+                      <p class="text-slate-500 text-sm truncate">{{ result.url }}</p>
+                    </div>
+                  </div>
+                  <div v-if="index === selectedIndex" class="flex items-center gap-1 flex-shrink-0">
+                    <span class="kbd">↵</span>
+                  </div>
                 </div>
               </li>
             </ul>
           </div>
+        </div>
+
+        <!-- Keyboard hints -->
+        <div class="flex items-center justify-center gap-6 mt-6 text-xs text-slate-500">
+          <span class="flex items-center gap-1.5">
+            <span class="kbd">↑</span><span class="kbd">↓</span> Navigate
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="kbd">↵</span> Open
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="kbd">esc</span> Clear
+          </span>
         </div>
       </div>
     </div>

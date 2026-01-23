@@ -4,21 +4,157 @@
 @tailwind components;
 @tailwind utilities;
 
-
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
   font-weight: normal;
 }
 
-/* Spotlight backdrop tweaks */
+/* Ultra-modern dark theme */
 body {
-  background: radial-gradient(ellipse at center, rgba(2,6,23,0.85) 0%, rgba(2,6,23,0.95) 100%);
+  background: #030712;
   color-scheme: dark;
+  overflow-x: hidden;
 }
 
-.backdrop-blur-md {
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+/* Animated gradient mesh background */
+.gateway-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 50%, rgba(59, 130, 246, 0.1), transparent),
+    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(168, 85, 247, 0.08), transparent);
+  z-index: 0;
+}
+
+/* Subtle grid overlay */
+.gateway-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+  z-index: 1;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+}
+
+/* Floating particles effect */
+.gateway-particles {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.gateway-particles::before,
+.gateway-particles::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: float 20s ease-in-out infinite;
+}
+
+.gateway-particles::before {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.2));
+  top: 10%;
+  left: 10%;
+}
+
+.gateway-particles::after {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.15));
+  bottom: 10%;
+  right: 10%;
+  animation-delay: -10s;
+  animation-direction: reverse;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(50px, -30px) scale(1.1);
+  }
+  50% {
+    transform: translate(-20px, 40px) scale(0.95);
+  }
+  75% {
+    transform: translate(-40px, -20px) scale(1.05);
+  }
+}
+
+/* Glass morphism effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Input glow effect */
+.search-input {
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  box-shadow:
+    0 0 0 2px rgba(99, 102, 241, 0.3),
+    0 0 40px rgba(99, 102, 241, 0.15);
+}
+
+/* Result item hover states */
+.result-item {
+  transition: all 0.15s ease;
+}
+
+.result-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.result-item.selected {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1));
+  border-left: 2px solid rgba(99, 102, 241, 0.8);
+}
+
+/* Scrollbar styling */
+.results-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.results-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.results-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.results-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Keyboard shortcut badge */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.7rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
 }
