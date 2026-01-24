@@ -99,13 +99,13 @@ const handleInput = (event: Event) => {
       }
       return map
     }, new Map<string, DataItem>())
-  ).map(([_, item]) => item)
+  ).map(([, item]) => item)
   
   searchResults.value = uniqueResults.sort((a, b) => {
     const similarityA = calculateSimilarity(input.value, a.name, a.fullName || a.name)
     const similarityB = calculateSimilarity(input.value, b.name, b.fullName || b.name)
     return similarityB - similarityA
-  })
+  }).slice(0, 8)
 }
 
 // Reset selection when results change
@@ -134,19 +134,9 @@ onMounted(() => {
     <div class="gateway-particles"></div>
 
     <!-- Main content -->
-    <div class="relative z-10 min-h-screen flex flex-col items-center justify-center px-6">
-      <!-- Logo and branding -->
-      <div class="flex flex-col items-center mb-8">
-        <div class="relative mb-4">
-          <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur-xl opacity-30"></div>
-          <img src="/src/assets/logo.svg" alt="logo" class="relative h-16 w-16" />
-        </div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">Gateway</h1>
-        <p class="text-slate-400 mt-1 text-sm">Press <span class="kbd">⌘</span> <span class="kbd">K</span> anywhere to search</p>
-      </div>
-
+    <div class="relative z-10 min-h-screen px-6">
       <!-- Search container -->
-      <div class="w-full max-w-2xl">
+      <div class="fixed top-[40vh] left-1/2 -translate-x-1/2 w-full max-w-2xl px-6">
         <div class="glass-card rounded-2xl p-2">
           <!-- Search input -->
           <div class="relative">
@@ -166,7 +156,7 @@ onMounted(() => {
           </div>
 
           <!-- Results dropdown -->
-          <div v-if="searchResults.length" class="results-container mt-2 max-h-[400px] overflow-auto rounded-xl">
+          <div v-if="searchResults.length" class="results-container mt-2 rounded-xl">
             <ul class="py-1">
               <li
                 v-for="(result, index) in searchResults"
@@ -202,7 +192,7 @@ onMounted(() => {
         </div>
 
         <!-- Keyboard hints -->
-        <div class="flex items-center justify-center gap-6 mt-6 text-xs text-slate-500">
+        <div class="flex items-center justify-center gap-6 mt-4 text-xs text-slate-500">
           <span class="flex items-center gap-1.5">
             <span class="kbd">↑</span><span class="kbd">↓</span> Navigate
           </span>
