@@ -10,7 +10,7 @@ build:
 	@npm run build
 	@docker build -t work/gateway .
 
-.PHONY: run
+.PHONY: run-dev
 run-dev:
 	@docker run -p 5678:8080 work/gateway
 

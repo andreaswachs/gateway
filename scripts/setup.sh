@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo "================================================"
 echo "Gateway Setup Script"

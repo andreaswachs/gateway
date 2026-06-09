@@ -1,64 +1,64 @@
 <script setup lang="ts">
-import TrieSearch from 'trie-search'
+import Fuse, { type FuseResult } from 'fuse.js'
 import jsonData from '@/assets/data.json'
 import { onMounted, ref, watch } from 'vue'
 
 interface DataItem {
   name: string
-  fullName?: string  // Add optional fullName field
   url: string
 }
 
-// Initialize trie with the 'name' field as the key
-const trie = new TrieSearch(['name'])
-const searchResults = ref<DataItem[]>([])
+interface QuickCard {
+  title: string
+  url: string
+  image?: string
+}
+
+interface QuickSection {
+  title: string
+  cards: QuickCard[]
+}
+
+interface QuickColumn {
+  sections: QuickSection[]
+}
+
+interface QuickLinks {
+  columns: QuickColumn[]
+}
+
+interface JsonData {
+  searchItems: DataItem[]
+  quickLinks: QuickLinks
+}
+
+const quickLinks = (jsonData as unknown as JsonData).quickLinks
+
+const fuse = new Fuse((jsonData as unknown as JsonData).searchItems, {
+  keys: ['name'],
+  includeScore: true,
+  threshold: 0.4,
+  ignoreLocation: true,
+})
+
+const searchResults = ref<FuseResult<DataItem>[]>([])
 const selectedIndex = ref(-1)
+const searchInput = ref<HTMLInputElement | null>(null)
 
-// Add the JSON data to the trie
-const addItemWithVariations = (item: DataItem) => {
-  const name = item.name
-  const itemWithFullName = { ...item, fullName: name }  // Store original name
-  trie.add(itemWithFullName)
-  
-  // Add variations with characters removed from the left
-  for (let i = 1; i < name.length; i++) {
-    const variation = { 
-      ...item,
-      fullName: name,  // Keep original name for reference
-      name: name.slice(i) 
-    }
-    trie.add(variation)
+const navigateTo = (event: MouseEvent, url: string) => {
+  if (event.metaKey || event.ctrlKey) {
+    window.open(url, '_blank')
+  } else {
+    window.location.href = url
   }
-}
-
-jsonData.forEach(addItemWithVariations)
-
-const calculateSimilarity = (input: string, name: string, fullName: string): number => {
-  const lowerInput = input.toLowerCase()
-  const lowerName = fullName.toLowerCase()  // Use fullName for comparison
-  
-  // Exact match gets highest priority
-  if (lowerName === lowerInput) return 100
-  
-  // Starts with gets second priority
-  if (lowerName.startsWith(lowerInput)) return 75
-  
-  // Contains gets third priority, with earlier matches ranking higher
-  const index = lowerName.indexOf(lowerInput)
-  if (index >= 0) return 50 - (index * 0.1)
-  
-  return 0
-}
-
-const navigateTo = (url: string) => {
-  window.location.href = url
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     event.preventDefault()
-    const input = event.target as HTMLInputElement
-    input.value = ''
+    if (searchInput.value) {
+      searchInput.value.value = ''
+    }
     searchResults.value = []
     return
   }
@@ -73,8 +73,12 @@ const handleKeydown = (event: KeyboardEvent) => {
     selectedIndex.value = Math.max(selectedIndex.value - 1, 0)
   } else if (event.key === 'Enter' && selectedIndex.value >= 0) {
     event.preventDefault()
-    const selectedItem = searchResults.value[selectedIndex.value]
-    navigateTo(selectedItem.url)
+    const selectedItem = searchResults.value[selectedIndex.value].item
+    if (event.metaKey || event.ctrlKey) {
+      window.open(selectedItem.url, '_blank')
+    } else {
+      window.location.href = selectedItem.url
+    }
   }
 }
 
@@ -84,28 +88,10 @@ const handleInput = (event: Event) => {
     searchResults.value = []
     return
   }
-  
-  // Get results and sort them by similarity
-  const results = trie.get(input.value) as DataItem[]
-  
-  // Deduplicate results based on fullName
-  const uniqueResults = Array.from(
-    results.reduce((map, item) => {
-      const fullName = item.fullName || item.name
-      if (!map.has(fullName) || 
-          calculateSimilarity(input.value, item.name, fullName) > 
-          calculateSimilarity(input.value, map.get(fullName)!.name, fullName)) {
-        map.set(fullName, item)
-      }
-      return map
-    }, new Map<string, DataItem>())
-  ).map(([, item]) => item)
-  
-  searchResults.value = uniqueResults.sort((a, b) => {
-    const similarityA = calculateSimilarity(input.value, a.name, a.fullName || a.name)
-    const similarityB = calculateSimilarity(input.value, b.name, b.fullName || b.name)
-    return similarityB - similarityA
-  }).slice(0, 8)
+
+  searchResults.value = fuse.search(input.value, { limit: 8 })
+
+  selectedIndex.value = 0
 }
 
 // Reset selection when results change
@@ -113,16 +99,12 @@ watch(searchResults, (newResults) => {
   if (newResults.length === 0) {
     selectedIndex.value = -1
   } else {
-    // Select first item by default, or keep selection in bounds
-    selectedIndex.value = selectedIndex.value === -1 ? 0 : Math.min(selectedIndex.value, newResults.length - 1)
+    selectedIndex.value = 0
   }
 })
 
 onMounted(() => {
-  const inputElement = document.querySelector('input')
-  if (inputElement) {
-    inputElement.focus()
-  }
+  searchInput.value?.focus()
 })
 </script>
 
@@ -136,7 +118,7 @@ onMounted(() => {
     <!-- Main content -->
     <div class="relative z-10 min-h-screen px-6">
       <!-- Search container -->
-      <div class="fixed top-[40vh] left-1/2 -translate-x-1/2 w-full max-w-2xl px-6">
+      <div class="fixed top-[10vh] left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-20">
         <div class="glass-card rounded-2xl p-2">
           <!-- Search input -->
           <div class="relative">
@@ -146,6 +128,7 @@ onMounted(() => {
               </svg>
             </div>
             <input
+              ref="searchInput"
               type="text"
               class="search-input w-full rounded-xl bg-white/5 placeholder:text-slate-500 text-white pl-12 pr-4 py-4 text-lg outline-none border border-transparent focus:border-indigo-500/30"
               placeholder="Search repositories, services, tools..."
@@ -160,14 +143,14 @@ onMounted(() => {
             <ul class="py-1">
               <li
                 v-for="(result, index) in searchResults"
-                :key="result.fullName || result.name"
+                :key="result.item.name"
                 :class="[
                   'result-item mx-1 px-4 py-3 rounded-lg cursor-pointer',
                   index === selectedIndex ? 'selected' : ''
                 ]"
                 role="option"
                 :aria-selected="index === selectedIndex"
-                @click="navigateTo(result.url)"
+                @click="navigateTo($event, result.item.url)"
                 @mouseenter="selectedIndex = index"
               >
                 <div class="flex items-center justify-between gap-4">
@@ -178,8 +161,8 @@ onMounted(() => {
                       </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                      <p class="text-white font-medium truncate">{{ result.fullName || result.name }}</p>
-                      <p class="text-slate-500 text-sm truncate">{{ result.url }}</p>
+                      <p class="text-white font-medium truncate">{{ result.item.name }}</p>
+                      <p class="text-slate-500 text-sm truncate">{{ result.item.url }}</p>
                     </div>
                   </div>
                   <div v-if="index === selectedIndex" class="flex items-center gap-1 flex-shrink-0">
@@ -202,6 +185,40 @@ onMounted(() => {
           <span class="flex items-center gap-1.5">
             <span class="kbd">esc</span> Clear
           </span>
+        </div>
+      </div>
+
+      <!-- Quick links cards -->
+      <div v-if="quickLinks?.columns?.length" class="relative z-10 max-w-6xl mx-auto px-6 pt-[30vh] pb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <template v-for="(column, colIdx) in quickLinks.columns" :key="colIdx">
+            <div class="space-y-6">
+              <template v-for="(section, secIdx) in column.sections" :key="secIdx">
+                <div v-if="section.title" class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 px-1">{{ section.title }}</div>
+                <div class="grid grid-cols-1 gap-2">
+                  <a
+                    v-for="card in section.cards"
+                    :key="card.title"
+                    :href="card.url"
+                    class="quick-card w-full flex items-center gap-3 cursor-pointer group p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:border-indigo-500/20 hover:bg-white/[0.04] transition-all"
+                  >
+                    <img
+                      v-if="card.image"
+                      :src="card.image"
+                      :alt="card.title"
+                      class="w-6 h-6 object-contain group-hover:scale-110 transition-transform flex-shrink-0"
+                      loading="lazy"
+                      @error="(e) => ((e.target as HTMLImageElement).style.display = 'none')"
+                    />
+                    <svg v-else class="w-6 h-6 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <span class="text-sm text-slate-300 font-medium truncate">{{ card.title }}</span>
+                  </a>
+                </div>
+              </template>
+            </div>
+          </template>
         </div>
       </div>
     </div>

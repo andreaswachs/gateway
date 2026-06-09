@@ -156,13 +156,39 @@ if [ "$CUSTOM_LINKS" != "[]" ]; then
     echo "Added $CUSTOM_COUNT custom links"
 fi
 
+# Read quick links from config
+QUICK_LINKS=$(jq '.quickLinks // {}' config.json)
+
+# Extract card titles/urls from quick links and add them as search items
+QUICK_LINK_ITEMS=$(jq '[.quickLinks.columns // [] | .[].sections[]?.cards[]? | {name: .title, url: .url}]' config.json)
+if [ "$QUICK_LINK_ITEMS" != "[]" ]; then
+    echo "Adding quick link cards to search index..."
+    TEMP_MERGE=$(mktemp)
+    QUICK_LINK_FILE=$(mktemp)
+    echo "$QUICK_LINK_ITEMS" > "$QUICK_LINK_FILE"
+    jq -s 'add | unique_by(.url)' src/assets/data.json "$QUICK_LINK_FILE" > "$TEMP_MERGE"
+    mv "$TEMP_MERGE" src/assets/data.json
+    rm "$QUICK_LINK_FILE"
+    QUICK_SEARCH_COUNT=$(echo "$QUICK_LINK_ITEMS" | jq 'length')
+    echo "Added $QUICK_SEARCH_COUNT quick link items to search"
+fi
+
+# Build final structured data file with searchItems and quickLinks
+TEMP_STRUCTURED=$(mktemp)
+SEARCH_ITEMS=$(cat src/assets/data.json)
+jq -n --argjson searchItems "$SEARCH_ITEMS" --argjson quickLinks "$QUICK_LINKS" \
+    '{ searchItems: $searchItems, quickLinks: $quickLinks }' > "$TEMP_STRUCTURED"
+mv "$TEMP_STRUCTURED" src/assets/data.json
+
 # Final validation
 if ! jq empty src/assets/data.json >/dev/null 2>&1; then
     echo "ERROR: Generated data.json is not valid JSON"
     exit 1
 fi
 
-TOTAL_ITEMS=$(jq 'length' src/assets/data.json)
+TOTAL_ITEMS=$(jq '.searchItems | length' src/assets/data.json)
 echo ""
 echo "✓ Success! Data file generated at src/assets/data.json"
-echo "  Total items: $TOTAL_ITEMS" 
+echo "  Total search items: $TOTAL_ITEMS"
+HAS_QUICK_LINKS=$(jq '.quickLinks.columns // [] | length' src/assets/data.json)
+echo "  Quick link columns: $HAS_QUICK_LINKS"

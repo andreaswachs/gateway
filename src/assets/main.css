@@ -127,6 +127,13 @@ body {
   border-left: 2px solid rgba(99, 102, 241, 0.8);
 }
 
+/* Solid background for search results dropdown */
+.results-container.glass-card {
+  background: #1e1b2e;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* Scrollbar styling */
 .results-container::-webkit-scrollbar {
   width: 6px;
@@ -143,6 +150,16 @@ body {
 
 .results-container::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Quick card hover effect */
+.quick-card {
+  transition: all 0.2s ease;
+}
+
+.quick-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
 }
 
 /* Keyboard shortcut badge */
